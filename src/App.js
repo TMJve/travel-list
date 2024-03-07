@@ -7,6 +7,7 @@ import React, { useState } from "react";
 
 function App() {
   const [items, setItems] = useState([]);
+  
 
   function handleAddItem(item) {
     setItems(items => [...items, item]);
@@ -26,7 +27,7 @@ function App() {
         <Logo />
         <Form onAddItem={handleAddItem} />
         <PackingList onToggleItem={handleToggleItem} onDeleteItem={handleDeleteItem} items={items} />
-        <Status />
+        <Status items={items} />
     </div>
 
   )
@@ -73,11 +74,26 @@ function Form({onAddItem}) {
 }
 
 function PackingList({ items, onDeleteItem, onToggleItem }) {
+  const [sortOption, setSortOption] = useState("packed");
+  let sortedItems;
+
+  if(sortOption === 'input') sortedItems = items;
+
+  if(sortOption === 'description') sortedItems = items.slice().sort((a, b) => a.description.localeCompare(b.description));
+
+  if(sortOption === 'packed') sortedItems = items.slice().sort((a, b) => Number(a.packed) - Number(b.packed));
+
   return (
     <div className="list">
       <ul>
-        {items.map(item=><Item item={item} onToggleItem={onToggleItem} onDeleteItem={onDeleteItem} key={item.id}/>)}
+        {sortedItems.map(item=><Item item={item} onToggleItem={onToggleItem} onDeleteItem={onDeleteItem} key={item.id}/>)}
       </ul>
+      <select className="actions" value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+        <option value='input'>Sort by input order</option>
+        <option value='description'>Sort by Description</option>
+        <option value='packed'>Sort by Packed</option>
+      </select>
+
     </div>
   )
 }
@@ -92,10 +108,26 @@ function Item({ item, onDeleteItem, onToggleItem }) {
   </li>
 }
 
-function Status() {
-  return <footer className="stats">
-    <em>💼You have X items on your list, and you already have packed X (X%)</em>
+function Status({ items }) {
 
+  if(!items.length) return (
+    <p className="stats">
+      <em>
+        Start Listing Things Up!    
+      </em>
+    </p>
+  )
+  
+
+  const numItems = items.length;
+  const numPacked = items.filter((item) => item.packed).length;
+  const percentage = Math.round((numPacked / numItems * 100));
+
+  return <footer className="stats">
+    <em>{percentage === 100 ? "You are ready to go on vacation! 🏖️" : `💼You have ${numItems} items on your list, 
+      and you already have packed ${numPacked} (${percentage}%)`}
+    </em>
+    
   </footer>
 }
 
